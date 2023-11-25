@@ -155,7 +155,12 @@ func Encrypt(c *Conf, filename string) error {
 
 	for i := 0; i < c.count; i++ {
 		for {
-			EncryptChunk(aead, outfile, size)
+			if size < chunkSize {
+				EncryptChunk(aead, outfile, size)
+				break
+			}
+
+			EncryptChunk(aead, outfile, chunkSize)
 			size = size - chunkSize
 
 			if size <= 0 {
