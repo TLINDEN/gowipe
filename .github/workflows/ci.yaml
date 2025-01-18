@@ -1,4 +1,4 @@
-name: build-and-test-tablizer
+name: build-and-test-gowipe
 on: [push, pull_request]
 jobs:
   build:
