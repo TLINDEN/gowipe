@@ -1,5 +1,11 @@
 ## gowipe - securely delete files and directories (not for SSD)
 
+[![Actions](https://github.com/tlinden/gowipe/actions/workflows/ci.yaml/badge.svg)](https://github.com/tlinden/gowipe/actions)
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/tlinden/gowipe/blob/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tlinden/gowipe)](https://goreportcard.com/report/github.com/tlinden/gowipe)
+[![GitHub release](https://img.shields.io/github/v/release/tlinden/gowipe?color=%2300a719)](https://github.com/TLINDEN/gowipe/releases/latest)
+
+
 ```
 Usage: gowipe [-rcvz] <file|directory>...
 
