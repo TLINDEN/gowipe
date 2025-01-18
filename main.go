@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,7 +27,7 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-const VERSION string = "0.0.2"
+const VERSION string = "0.0.3"
 const Usage string = `This is gowipe - destruct files in a non-recoverable way.
 
 Usage: gowipe [-rcvz] <file|directory>...
@@ -84,7 +83,7 @@ func main() {
 	flag.BoolVarP(&optzero, "zero", "Z", optzero, "zero mode")
 	flag.BoolVarP(&optsecure, "secure", "S", optsecure, "secure mode")
 	flag.BoolVarP(&optmath, "math", "M", optmath, "math mode")
-	flag.BoolVarP(&optmath, "encrypt", "E", optmath, "encrypt mode")
+	flag.BoolVarP(&optencrypt, "encrypt", "E", optmath, "encrypt mode")
 
 	flag.BoolVarP(&c.recurse, "recursive", "r", c.recurse, "recursive")
 	flag.BoolVarP(&c.nodelete, "nodelete", "n", c.nodelete, "don't delete")
@@ -153,7 +152,7 @@ func Wipe(file string, c *Conf, wiper *shred.ShredderConf) {
 				return
 			}
 
-			files, err := ioutil.ReadDir(file)
+			files, err := os.ReadDir(file)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -162,6 +161,7 @@ func Wipe(file string, c *Conf, wiper *shred.ShredderConf) {
 				Wipe(filepath.Join(file, entry.Name()), c, wiper)
 			}
 
+			// delete dir
 			if !c.nodelete {
 				err = os.Remove(Rename(file, c))
 				if err != nil {
@@ -170,14 +170,21 @@ func Wipe(file string, c *Conf, wiper *shred.ShredderConf) {
 			}
 		} else {
 			if c.mode == "encrypt" {
-				err := Encrypt(c, file)
-				if err != nil {
+				if err := Encrypt(c, file); err != nil {
 					log.Fatal(err)
 				}
 
-				Rename(file, c)
+				// delete encrypted file
+				if !c.nodelete {
+					err = os.Remove(Rename(file, c))
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
 			} else {
-				wiper.ShredFile(Rename(file, c))
+				if err := wiper.ShredFile(Rename(file, c)); err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 
@@ -204,7 +211,7 @@ func Rename(file string, c *Conf) string {
 	for i := 0; i < c.count; i++ {
 		for {
 			switch c.mode {
-			case `secure`:
+			case `secure`, `encrypt`:
 				new, err := GenerateSecureRandomString(length)
 				if err != nil {
 					log.Fatal(err)
@@ -220,11 +227,9 @@ func Rename(file string, c *Conf) string {
 			}
 		}
 
-		/*
-			 	if c.verbose {
-				  fmt.Printf("renaming %s/%s => %s/%s\n", dir, base, dir, newname)
-			    }
-		*/
+		if c.verbose {
+			fmt.Printf("renaming %s/%s => %s/%s\n", dir, base, dir, newname)
+		}
 
 		err := os.Rename(filepath.Join(dir, base), filepath.Join(dir, newname))
 		if err != nil {

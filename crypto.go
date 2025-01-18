@@ -119,7 +119,7 @@ func GetRandomKey() ([]byte, error) {
 		return nil, err
 	}
 
-	salt, err := GenerateSecureRandomBytes(chapo.NonceSize)
+	salt, err := GenerateSecureRandomBytes(chapo.NonceSizeX)
 	if err != nil {
 		return nil, err
 	}
@@ -156,11 +156,17 @@ func Encrypt(c *Conf, filename string) error {
 	for i := 0; i < c.count; i++ {
 		for {
 			if size < chunkSize {
-				EncryptChunk(aead, outfile, size)
+				if err := EncryptChunk(aead, outfile, size); err != nil {
+					return err
+				}
+
 				break
 			}
 
-			EncryptChunk(aead, outfile, chunkSize)
+			if err := EncryptChunk(aead, outfile, chunkSize); err != nil {
+				return err
+			}
+
 			size = size - chunkSize
 
 			if size <= 0 {
@@ -174,7 +180,7 @@ func Encrypt(c *Conf, filename string) error {
 
 func EncryptChunk(aead cipher.AEAD, file *os.File, size int64) error {
 	chunk := make([]byte, size)
-	nonce, err := GenerateSecureRandomBytes(int(chapo.NonceSize))
+	nonce, err := GenerateSecureRandomBytes(int(chapo.NonceSizeX))
 	if err != nil {
 		return err
 	}
@@ -192,58 +198,3 @@ func EncryptChunk(aead cipher.AEAD, file *os.File, size int64) error {
 
 	return nil
 }
-
-/*
-func Encrypt(c *Conf, filename string) error {
-	salt, err := GetRand(KeySize)
-	if err != nil {
-		return err
-	}
-
-	salt1, err := GetRand(KeySize)
-	if err != nil {
-		return err
-	}
-
-	outfile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		return err
-	}
-	defer outfile.Close()
-
-	key := argon2.IDKey(salt1, salt, KeyTime, KeyMemory, KeyThreads, KeySize)
-
-	aead, err := chacha20poly1305.NewX(key)
-	if err != nil {
-		return err
-	}
-
-	buf := make([]byte, chunkSize)
-	ad_counter := 0 // associated data is a counter
-
-	for {
-		if n > 0 {
-			// Select a random nonce, and leave capacity for the ciphertext.
-			nonce := make([]byte, aead.NonceSize(), aead.NonceSize()+n+aead.Overhead())
-			if m, err := cryptorand.Read(nonce); err != nil || m != aead.NonceSize() {
-				return err
-			}
-
-			msg := buf[:n]
-			// Encrypt the message and append the ciphertext to the nonce.
-			encryptedMsg := aead.Seal(nonce, nonce, msg, []byte(string(ad_counter)))
-			outfile.Write(encryptedMsg)
-			ad_counter += 1
-		}
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			log.Println("Error when reading input file chunk :", err)
-			panic(err)
-		}
-	}
-}
-*/
