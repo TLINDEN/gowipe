@@ -46,7 +46,7 @@ for D in $DIST; do
     GOOS=${os} GOARCH=${arch} go build -o ${binfile} -ldflags "-X 'github.com/tlinden/tablizer/cfg.VERSION=${version}'"
     mkdir -p ${tardir}
     cp ${binfile} README.md LICENSE ${tardir}/
-    echo 'tool = tablizer
+    echo 'tool = gowipe
 PREFIX = /usr/local
 UID    = root
 GID    = 0
