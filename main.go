@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 Thomas von Dein
+Copyright © 2022-2025 Thomas von Dein
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,12 +22,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/JojiiOfficial/shred"
 	flag "github.com/spf13/pflag"
 )
 
-const VERSION string = "0.0.3"
+const VERSION string = "0.0.4"
 const Usage string = `This is gowipe - destruct files in a non-recoverable way.
 
 Usage: gowipe [-rcvz] <file|directory>...
@@ -55,6 +56,9 @@ type Conf struct {
 	nodelete bool
 	norename bool
 	verbose  bool
+	files    int
+	dirs     int
+	size     int64
 }
 
 func main() {
@@ -138,14 +142,26 @@ func main() {
 	shredder := shred.Shredder{}
 	shredconf := shred.NewShredderConf(&shredder, option, c.count, !c.nodelete)
 
+	start := time.Now()
+
 	for _, file := range flag.Args() {
 		Wipe(file, &c, shredconf)
+	}
+
+	if c.verbose {
+		fmt.Println()
+		fmt.Printf("   Dirs wiped: %d\n", c.dirs)
+		fmt.Printf("  Files wiped: %d\n", c.files)
+		fmt.Printf("Bytes deleted: %d\n", c.size)
+		fmt.Printf(" Time elapsed: %s\n", time.Since(start))
+		fmt.Printf("  Overwritten: %d times\n", c.count)
+		fmt.Printf("    Wipe mode: %s\n", c.mode)
+		fmt.Printf(" Recurse dirs: %t\n", c.recurse)
 	}
 }
 
 func Wipe(file string, c *Conf, wiper *shred.ShredderConf) {
 	if info, err := os.Stat(file); err == nil {
-
 		if info.IsDir() {
 			if !c.recurse {
 				fmt.Printf("-r not set, ignoring directory %s\n", file)
@@ -167,6 +183,8 @@ func Wipe(file string, c *Conf, wiper *shred.ShredderConf) {
 				if err != nil {
 					log.Fatal(err)
 				}
+
+				c.dirs++
 			}
 		} else {
 			if c.mode == "encrypt" {
@@ -186,11 +204,15 @@ func Wipe(file string, c *Conf, wiper *shred.ShredderConf) {
 					log.Fatal(err)
 				}
 			}
+
+			c.size += info.Size()
 		}
 
 		if c.verbose {
-			fmt.Printf("Wiped %d times: %s\n", c.count, file)
+			fmt.Printf("Wiped %s (%d bytes)\n", file, info.Size())
 		}
+
+		c.files++
 	} else {
 		if os.IsNotExist(err) {
 			fmt.Printf("No such file or directory: %s\n", file)
@@ -225,10 +247,6 @@ func Rename(file string, c *Conf) string {
 			if newname != base {
 				break
 			}
-		}
-
-		if c.verbose {
-			fmt.Printf("renaming %s/%s => %s/%s\n", dir, base, dir, newname)
 		}
 
 		err := os.Rename(filepath.Join(dir, base), filepath.Join(dir, newname))

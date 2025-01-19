@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright © 2022 Thomas von Dein
+# Copyright © 2022-2025 Thomas von Dein
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
