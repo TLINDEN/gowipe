@@ -50,6 +50,7 @@ Bytes deleted: 3889549
  Recurse dirs: true
 ```
 
+## Usage
 
 ```
 Usage: gowipe [-rcvz] <file|directory>...
