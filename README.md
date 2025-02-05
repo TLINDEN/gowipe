@@ -15,7 +15,7 @@ into a file as its original size.
 
 You can tweak mode and round numbers. Other modes are `zero`, which
 uses zeroes for overwriting (not recommended) or `encrypt` which
-encrypts the data using AES and a strong random key. This is the most
+encrypts the data using ChaCha20Poly1305 and a strong random key. This is the most
 secure but also to slowest mode.
 
 Although you can use `gowipe` on SSD disks, it doesn't make much
