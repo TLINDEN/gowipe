@@ -38,7 +38,7 @@ install: buildlocal
 clean:
 	rm -rf $(tool) coverage.out
 
-test:
+test: clean
 	go test -v ./...
 
 singletest:
